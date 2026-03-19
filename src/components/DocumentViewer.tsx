@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, MoreHorizontal, ArrowRightToLine, ZoomIn, ZoomOut, ChevronDown } from "lucide-react";
+import { Search, MoreHorizontal, ArrowRightToLine, ChevronDown } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PaperViewMode } from "@/types";
 
 export const DocumentViewer = () => {
   const { selectedPaper, setSelectedPaper, setViewMode } = useAppState();
-  const [viewMode, setLocalViewMode] = useState<PaperViewMode>("pdf");
+  const [paperViewMode, setPaperViewMode] = useState<PaperViewMode>("pdf");
   const [zoom, setZoom] = useState(132);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -15,12 +15,17 @@ export const DocumentViewer = () => {
 
   const paper = selectedPaper;
 
+  const goHome = () => {
+    setSelectedPaper(null);
+    setViewMode("home");
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 bg-background rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Breadcrumb */}
       <div className="px-6 pt-4 pb-1 shrink-0">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <button onClick={() => { setSelectedPaper(null); setViewMode("home"); }} className="hover:text-foreground transition-colors">Home</button>
+          <button onClick={goHome} className="hover:text-foreground transition-colors cursor-pointer">Home</button>
           <span className="text-muted-foreground/50">›</span>
           <span className="hover:text-foreground cursor-pointer transition-colors">{paper.theme}</span>
           <span className="text-muted-foreground/50">›</span>
@@ -54,14 +59,14 @@ export const DocumentViewer = () => {
             <span className="tabular-nums">{zoom}%</span>
             <ChevronDown className="w-3 h-3" />
           </div>
-          <div className="flex bg-secondary rounded-md overflow-hidden border border-transparent">
+          <div className="flex bg-secondary rounded-md overflow-hidden">
             <button
-              onClick={() => setLocalViewMode("pdf")}
-              className={`px-2.5 py-1 text-xs font-medium transition-colors ${viewMode === "pdf" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setPaperViewMode("pdf")}
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${paperViewMode === "pdf" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"}`}
             >PDF</button>
             <button
-              onClick={() => setLocalViewMode("plain")}
-              className={`px-2.5 py-1 text-xs font-medium transition-colors ${viewMode === "plain" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setPaperViewMode("plain")}
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${paperViewMode === "plain" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"}`}
             >Plain text</button>
           </div>
           <button className="p-1 hover:bg-accent rounded transition-colors">
@@ -74,14 +79,14 @@ export const DocumentViewer = () => {
       <div className="flex-1 overflow-y-auto scrollbar-thin bg-muted/30">
         <div className="px-6 py-5">
           <motion.div
+            key={paper.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
             className="max-w-[680px] mx-auto"
           >
-            {viewMode === "pdf" ? (
+            {paperViewMode === "pdf" ? (
               <div className="bg-background border border-border shadow-sm p-8 min-h-[800px]">
-                {/* Paper header rule */}
                 <div className="border-t border-foreground/20 mb-1" />
                 <div className="border-t border-foreground/10 mb-6" />
 
@@ -111,7 +116,7 @@ export const DocumentViewer = () => {
               <div className="bg-background border border-border shadow-sm p-8 space-y-4">
                 <h2 className="text-lg font-bold text-foreground">{paper.title}</h2>
                 <p className="text-xs text-muted-foreground">{paper.authors.join(", ")}</p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {paper.tags.map((tag) => (
                     <span key={tag} className="text-[10px] px-2 py-0.5 bg-accent rounded-full text-muted-foreground">{tag}</span>
                   ))}
