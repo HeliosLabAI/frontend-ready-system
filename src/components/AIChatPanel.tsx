@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   Plus, Clock, MoreHorizontal, MessageCircle, RotateCcw,
-  Share2, ThumbsUp, Copy, X, Send, Sparkles, Loader2
+  Share2, ThumbsUp, Copy, X, Send, Sparkles, Loader2, FileText
 } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { ChatMessage } from "@/types";
@@ -15,7 +15,7 @@ const renderContent = (content: string) => {
     }
     if (/^\[\d+\]$/.test(part)) {
       return (
-        <span key={j} className="inline-flex items-center justify-center w-[18px] h-[18px] mx-0.5 text-[10px] font-medium bg-muted text-muted-foreground rounded-full align-text-bottom cursor-pointer hover:bg-accent transition-colors">
+        <span key={j} className="inline-flex items-center justify-center w-[18px] h-[18px] mx-0.5 text-[10px] font-medium bg-secondary text-muted-foreground rounded-full align-text-bottom cursor-pointer hover:bg-accent transition-colors">
           {part.slice(1, -1)}
         </span>
       );
@@ -25,14 +25,61 @@ const renderContent = (content: string) => {
 };
 
 export const AIChatPanel = () => {
-  const { chatPanelOpen, selectedPaper, chatMessages, addChatMessage, clearChat } = useAppState();
+  const {
+    chatPanelOpen, selectedPaper, chatMessages, addChatMessage, clearChat,
+    allPapers, chatContextPaper, setChatContextPaper,
+    selectedTextForChat, setSelectedTextForChat
+  } = useAppState();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showAtMenu, setShowAtMenu] = useState(false);
+  const [atQuery, setAtQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(() => { scrollToBottom(); }, [chatMessages]);
+
+  // Handle selected text from paper
+  useEffect(() => {
+    if (selectedTextForChat) {
+      setInput(selectedTextForChat);
+      setSelectedTextForChat("");
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [selectedTextForChat, setSelectedTextForChat]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInput(val);
+
+    // Detect @ trigger
+    const atIndex = val.lastIndexOf("@");
+    if (atIndex !== -1 && (atIndex === 0 || val[atIndex - 1] === " ")) {
+      const query = val.slice(atIndex + 1);
+      if (!query.includes(" ")) {
+        setShowAtMenu(true);
+        setAtQuery(query);
+        return;
+      }
+    }
+    setShowAtMenu(false);
+    setAtQuery("");
+  };
+
+  const filteredPapers = allPapers.filter((p) =>
+    !atQuery || p.title.toLowerCase().includes(atQuery.toLowerCase())
+  ).slice(0, 5);
+
+  const selectAtPaper = (paper: typeof allPapers[0]) => {
+    setChatContextPaper(paper);
+    // Remove @query from input
+    const atIndex = input.lastIndexOf("@");
+    setInput(input.slice(0, atIndex));
+    setShowAtMenu(false);
+    setAtQuery("");
+    inputRef.current?.focus();
+  };
 
   const handleSend = () => {
     if (!input.trim() || isTyping) return;
@@ -55,23 +102,27 @@ export const AIChatPanel = () => {
     }, 1200 + Math.random() * 800);
   };
 
+  const copyToClipboard = useCallback((text: string) => {
+    navigator.clipboard.writeText(text);
+  }, []);
+
   if (!chatPanelOpen) return null;
 
   return (
-    <div className="w-[320px] h-full border border-border bg-background rounded-xl flex flex-col overflow-hidden shrink-0 shadow-sm">
+    <div className="w-[340px] h-full border border-border bg-background rounded-xl flex flex-col overflow-hidden shrink-0 shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-1.5 px-3 h-11 border-b border-border shrink-0">
         <Sparkles className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
         <span className="text-[13px] font-medium text-foreground truncate flex-1">
-          Human-AI Interaction (HAX) and...
+          {chatContextPaper ? chatContextPaper.title.slice(0, 30) + "..." : "AI Chat"}
         </span>
-        <button onClick={clearChat} className="p-1 hover:bg-accent rounded transition-colors">
+        <button onClick={clearChat} className="p-1 hover:bg-accent rounded transition-colors" title="New chat">
           <Plus className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
-        <button className="p-1 hover:bg-accent rounded transition-colors">
+        <button className="p-1 hover:bg-accent rounded transition-colors" title="History">
           <Clock className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
-        <button className="p-1 hover:bg-accent rounded transition-colors">
+        <button className="p-1 hover:bg-accent rounded transition-colors" title="More">
           <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
       </div>
@@ -88,7 +139,7 @@ export const AIChatPanel = () => {
                 <button
                   key={q}
                   onClick={() => { setInput(q); setTimeout(() => inputRef.current?.focus(), 50); }}
-                  className="block w-full text-left text-xs px-3 py-2 bg-accent/50 hover:bg-accent rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                  className="block w-full text-left text-xs px-3 py-2 bg-accent/50 hover:bg-accent rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {q}
                 </button>
@@ -106,17 +157,24 @@ export const AIChatPanel = () => {
             className={`mb-4 ${msg.role === "user" ? "flex justify-end" : ""}`}
           >
             {msg.role === "user" ? (
-              <div className="bg-primary text-primary-foreground rounded-lg rounded-br-sm px-3 py-2 max-w-[85%] text-[13px]">
+              <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-md px-3.5 py-2.5 max-w-[85%] text-[13px] leading-relaxed">
                 {msg.content}
               </div>
             ) : (
               <div>
-                <div className="text-[13px] text-foreground/85 leading-relaxed whitespace-pre-wrap">
+                <div className="text-[13px] text-foreground/90 leading-relaxed whitespace-pre-wrap">
                   {renderContent(msg.content)}
                 </div>
                 <div className="flex items-center gap-0.5 mt-2 text-muted-foreground">
-                  {[MessageCircle, RotateCcw, Share2, ThumbsUp, Copy].map((Icon, i) => (
-                    <button key={i} className="p-1 hover:bg-accent rounded transition-colors"><Icon className="w-3.5 h-3.5" /></button>
+                  {[
+                    { Icon: Copy, action: () => copyToClipboard(msg.content), title: "Copy" },
+                    { Icon: RotateCcw, action: () => {}, title: "Regenerate" },
+                    { Icon: ThumbsUp, action: () => {}, title: "Like" },
+                    { Icon: Share2, action: () => {}, title: "Share" },
+                  ].map(({ Icon, action, title }, i) => (
+                    <button key={i} onClick={action} title={title} className="p-1 hover:bg-accent rounded transition-colors">
+                      <Icon className="w-3.5 h-3.5" />
+                    </button>
                   ))}
                 </div>
               </div>
@@ -135,33 +193,67 @@ export const AIChatPanel = () => {
 
       {/* Input area */}
       <div className="px-3 pb-3 shrink-0">
-        {selectedPaper && (
+        {/* Context paper indicator */}
+        {chatContextPaper && (
           <div className="flex items-center gap-1.5 mb-2">
             <span className="text-xs text-muted-foreground">@</span>
-            <span className="inline-flex items-center gap-1 bg-accent px-2 py-0.5 rounded text-xs text-foreground">
-              Learning Transferable...
-              <button className="hover:text-destructive shrink-0"><X className="w-3 h-3" /></button>
+            <span className="inline-flex items-center gap-1 bg-accent px-2 py-0.5 rounded-md text-xs text-foreground">
+              <FileText className="w-3 h-3 text-muted-foreground" />
+              {chatContextPaper.title.length > 25 ? chatContextPaper.title.slice(0, 25) + "..." : chatContextPaper.title}
+              <button onClick={() => setChatContextPaper(null)} className="hover:text-destructive shrink-0 ml-0.5">
+                <X className="w-3 h-3" />
+              </button>
             </span>
           </div>
         )}
 
-        <div className="relative border border-border rounded-xl bg-surface-elevated focus-within:border-muted-foreground/30 transition-colors shadow-sm">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask this context a question..."
-            className="w-full bg-transparent px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground outline-none pr-10"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isTyping}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-all"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+        <div className="relative">
+          {/* @ mention dropdown */}
+          {showAtMenu && (
+            <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
+              <div className="px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border font-medium">
+                Switch paper context
+              </div>
+              {filteredPapers.map((paper) => (
+                <button
+                  key={paper.id}
+                  onClick={() => selectAtPaper(paper)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-accent/50 transition-colors text-left"
+                >
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-foreground truncate">{paper.title}</p>
+                    <p className="text-[10px] text-muted-foreground">{paper.authors[0]}</p>
+                  </div>
+                </button>
+              ))}
+              {filteredPapers.length === 0 && (
+                <div className="px-3 py-3 text-xs text-muted-foreground text-center">No papers found</div>
+              )}
+            </div>
+          )}
+
+          <div className="border border-border rounded-xl bg-card focus-within:border-muted-foreground/30 transition-colors shadow-sm">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !showAtMenu) handleSend();
+                if (e.key === "Escape") setShowAtMenu(false);
+              }}
+              placeholder="Ask about this paper... (@ to switch)"
+              className="w-full bg-transparent px-3.5 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground outline-none pr-10"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isTyping}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-all hover:bg-accent rounded-md"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
@@ -171,7 +263,6 @@ export const AIChatPanel = () => {
             <span className="text-[9px]">▾</span>
           </div>
           <span>No limit</span>
-          <span className="text-[9px]">▾</span>
         </div>
       </div>
     </div>

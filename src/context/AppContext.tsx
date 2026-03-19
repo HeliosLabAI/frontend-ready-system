@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { ViewMode, Paper, ChatMessage } from "@/types";
-import { papers } from "@/data/papers";
+import { papers as defaultPapers } from "@/data/papers";
 
 interface AppState {
   viewMode: ViewMode;
@@ -18,6 +18,17 @@ interface AppState {
   clearChat: () => void;
   activeTheme: string;
   setActiveTheme: (theme: string) => void;
+  // New features
+  allPapers: Paper[];
+  addPaper: (paper: Paper) => void;
+  chatContextPaper: Paper | null;
+  setChatContextPaper: (paper: Paper | null) => void;
+  selectedTextForChat: string;
+  setSelectedTextForChat: (text: string) => void;
+  navigationHistory: Paper[];
+  navigationIndex: number;
+  navigateBack: () => void;
+  navigateForward: () => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -42,28 +53,62 @@ These concepts collectively illustrate a shift towards more intelligent, adaptiv
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("paper");
-  const [selectedPaper, setSelectedPaperState] = useState<Paper | null>(papers[0]);
+  const [selectedPaper, setSelectedPaperState] = useState<Paper | null>(defaultPapers[0]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [activeTheme, setActiveTheme] = useState("Human-AI Interaction");
+  const [allPapers, setAllPapers] = useState<Paper[]>(defaultPapers);
+  const [chatContextPaper, setChatContextPaper] = useState<Paper | null>(defaultPapers[0]);
+  const [selectedTextForChat, setSelectedTextForChat] = useState("");
+  const [navigationHistory, setNavigationHistory] = useState<Paper[]>([defaultPapers[0]]);
+  const [navigationIndex, setNavigationIndex] = useState(0);
 
   const addChatMessage = (msg: ChatMessage) => setChatMessages((prev) => [...prev, msg]);
   const clearChat = () => setChatMessages([]);
 
+  const addPaper = (paper: Paper) => {
+    setAllPapers((prev) => [paper, ...prev]);
+  };
+
   const setSelectedPaper = (paper: Paper | null) => {
     setSelectedPaperState(paper);
     if (paper) {
+      setViewMode("paper");
+      setChatContextPaper(paper);
+      setNavigationHistory((prev) => {
+        const newHistory = prev.slice(0, navigationIndex + 1);
+        return [...newHistory, paper];
+      });
+      setNavigationIndex((prev) => prev + 1);
+    }
+  };
+
+  const navigateBack = () => {
+    if (navigationIndex > 0) {
+      const newIndex = navigationIndex - 1;
+      setNavigationIndex(newIndex);
+      const paper = navigationHistory[newIndex];
+      setSelectedPaperState(paper);
+      setChatContextPaper(paper);
+      setViewMode("paper");
+    }
+  };
+
+  const navigateForward = () => {
+    if (navigationIndex < navigationHistory.length - 1) {
+      const newIndex = navigationIndex + 1;
+      setNavigationIndex(newIndex);
+      const paper = navigationHistory[newIndex];
+      setSelectedPaperState(paper);
+      setChatContextPaper(paper);
       setViewMode("paper");
     }
   };
 
   const handleSetViewMode = (mode: ViewMode) => {
     setViewMode(mode);
-    if (mode !== "paper") {
-      // Don't clear paper when going to home/library so user can go back
-    }
   };
 
   return (
@@ -76,6 +121,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         searchOpen, setSearchOpen,
         chatMessages, addChatMessage, clearChat,
         activeTheme, setActiveTheme,
+        allPapers, addPaper,
+        chatContextPaper, setChatContextPaper,
+        selectedTextForChat, setSelectedTextForChat,
+        navigationHistory, navigationIndex,
+        navigateBack, navigateForward,
       }}
     >
       {children}

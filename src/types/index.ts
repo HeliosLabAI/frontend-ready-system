@@ -9,6 +9,7 @@ export interface Paper {
   subtheme?: string;
   tags: string[];
   citationCount: number;
+  isUploaded?: boolean;
 }
 
 export interface ThemeItem {

@@ -1,18 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, MoreHorizontal, ArrowRightToLine, ChevronDown } from "lucide-react";
+import { Search, MoreHorizontal, ArrowRightToLine, ChevronDown, Send } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
 import { PaperViewMode } from "@/types";
 
 export const DocumentViewer = () => {
-  const { selectedPaper, setSelectedPaper, setViewMode } = useAppState();
+  const { selectedPaper, setSelectedPaper, setViewMode, setSelectedTextForChat, chatPanelOpen } = useAppState();
   const [paperViewMode, setPaperViewMode] = useState<PaperViewMode>("pdf");
   const [zoom, setZoom] = useState(132);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [showSendToChat, setShowSendToChat] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [floatingPos, setFloatingPos] = useState({ x: 0, y: 0 });
+
+  // Detect text selection in the paper
+  useEffect(() => {
+    const handleMouseUp = () => {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
+      if (text && text.length > 3) {
+        const range = selection?.getRangeAt(0);
+        const rect = range?.getBoundingClientRect();
+        if (rect) {
+          setSelectedText(text);
+          setFloatingPos({ x: rect.left + rect.width / 2, y: rect.top - 10 });
+          setShowSendToChat(true);
+        }
+      } else {
+        setShowSendToChat(false);
+        setSelectedText("");
+      }
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => document.removeEventListener("mouseup", handleMouseUp);
+  }, []);
+
+  const handleSendToChat = () => {
+    if (selectedText) {
+      setSelectedTextForChat(`Regarding: "${selectedText.slice(0, 200)}${selectedText.length > 200 ? "..." : ""}"\n\nExplain this in more detail.`);
+      setShowSendToChat(false);
+      window.getSelection()?.removeAllRanges();
+    }
+  };
 
   if (!selectedPaper) return null;
-
   const paper = selectedPaper;
 
   const goHome = () => {
@@ -20,8 +53,27 @@ export const DocumentViewer = () => {
     setViewMode("home");
   };
 
+  const zoomIn = () => setZoom((z) => Math.min(z + 10, 200));
+  const zoomOut = () => setZoom((z) => Math.max(z - 10, 80));
+
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 bg-background rounded-xl border border-border shadow-sm overflow-hidden">
+      {/* Floating send-to-chat button */}
+      {showSendToChat && chatPanelOpen && (
+        <div
+          className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
+          style={{ left: floatingPos.x - 60, top: floatingPos.y - 40 }}
+        >
+          <button
+            onClick={handleSendToChat}
+            className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg hover:opacity-90 transition-opacity"
+          >
+            <Send className="w-3 h-3" />
+            Send to Chat
+          </button>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="px-6 pt-4 pb-1 shrink-0">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -29,7 +81,7 @@ export const DocumentViewer = () => {
           <span className="text-muted-foreground/50">›</span>
           <span className="hover:text-foreground cursor-pointer transition-colors">{paper.theme}</span>
           <span className="text-muted-foreground/50">›</span>
-          <span className="text-foreground">{paper.title.length > 35 ? paper.title.slice(0, 35) + "..." : paper.title}</span>
+          <span className="text-foreground font-medium">{paper.title.length > 35 ? paper.title.slice(0, 35) + "..." : paper.title}</span>
           <button className="ml-auto p-1 hover:bg-accent rounded transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
         </div>
       </div>
@@ -43,7 +95,7 @@ export const DocumentViewer = () => {
 
       {/* Search + controls bar */}
       <div className="flex items-center justify-between px-6 pb-3 shrink-0">
-        <div className={`flex items-center bg-secondary rounded-md px-3 py-1.5 transition-all border ${searchFocused ? "border-muted-foreground/30" : "border-transparent"}`}>
+        <div className={`flex items-center bg-secondary rounded-lg px-3 py-1.5 transition-all border ${searchFocused ? "border-muted-foreground/30" : "border-transparent"}`}>
           <Search className="w-3.5 h-3.5 text-muted-foreground mr-2" />
           <input
             value={searchQuery}
@@ -56,10 +108,11 @@ export const DocumentViewer = () => {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
-            <span className="tabular-nums">{zoom}%</span>
-            <ChevronDown className="w-3 h-3" />
+            <button onClick={zoomOut} className="px-1 hover:text-foreground transition-colors">−</button>
+            <span className="tabular-nums w-8 text-center">{zoom}%</span>
+            <button onClick={zoomIn} className="px-1 hover:text-foreground transition-colors">+</button>
           </div>
-          <div className="flex bg-secondary rounded-md overflow-hidden">
+          <div className="flex bg-secondary rounded-lg overflow-hidden">
             <button
               onClick={() => setPaperViewMode("pdf")}
               className={`px-2.5 py-1 text-xs font-medium transition-colors ${paperViewMode === "pdf" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"}`}
@@ -69,7 +122,7 @@ export const DocumentViewer = () => {
               className={`px-2.5 py-1 text-xs font-medium transition-colors ${paperViewMode === "plain" ? "bg-background text-foreground shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"}`}
             >Plain text</button>
           </div>
-          <button className="p-1 hover:bg-accent rounded transition-colors">
+          <button className="p-1 hover:bg-accent rounded transition-colors" title="Collapse panel">
             <ArrowRightToLine className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
@@ -77,7 +130,7 @@ export const DocumentViewer = () => {
 
       {/* Paper content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin bg-muted/30">
-        <div className="px-6 py-5">
+        <div className="px-6 py-5" style={{ fontSize: `${zoom / 132 * 100}%` }}>
           <motion.div
             key={paper.id}
             initial={{ opacity: 0 }}
@@ -86,8 +139,8 @@ export const DocumentViewer = () => {
             className="max-w-[680px] mx-auto"
           >
             {paperViewMode === "pdf" ? (
-              <div className="bg-background border border-border shadow-sm p-8 min-h-[800px]">
-                <div className="border-t border-foreground/20 mb-1" />
+              <div className="bg-background border border-border shadow-sm p-8 min-h-[800px] rounded-sm">
+                <div className="border-t-2 border-foreground/20 mb-1" />
                 <div className="border-t border-foreground/10 mb-6" />
 
                 <h2 className="text-lg font-bold text-center text-foreground leading-snug mb-4">
@@ -100,7 +153,7 @@ export const DocumentViewer = () => {
                   ))}
                 </p>
 
-                <div className={`gap-5 text-[11px] leading-[1.6] text-foreground/85 ${paper.body.length > 1 ? "grid grid-cols-2" : ""}`}>
+                <div className={`gap-5 text-[11px] leading-[1.7] text-foreground/85 ${paper.body.length > 1 ? "grid grid-cols-2" : ""}`}>
                   <div>
                     <h3 className="font-bold text-xs mb-1.5 text-foreground text-center">Abstract</h3>
                     <p className="text-justify hyphens-auto indent-4">{paper.abstract}</p>
@@ -113,7 +166,7 @@ export const DocumentViewer = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-background border border-border shadow-sm p-8 space-y-4">
+              <div className="bg-background border border-border shadow-sm p-8 space-y-4 rounded-sm">
                 <h2 className="text-lg font-bold text-foreground">{paper.title}</h2>
                 <p className="text-xs text-muted-foreground">{paper.authors.join(", ")}</p>
                 <div className="flex gap-2 flex-wrap">

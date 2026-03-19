@@ -1,18 +1,17 @@
 import { motion } from "framer-motion";
 import { FileText, Clock, TrendingUp, ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { useAppState } from "@/context/AppContext";
-import { papers } from "@/data/papers";
 
 export const HomeView = () => {
-  const { setSelectedPaper, setViewMode } = useAppState();
+  const { setSelectedPaper, setViewMode, allPapers } = useAppState();
 
-  const recentPapers = papers.slice(0, 3);
-  const trendingPapers = [...papers].sort((a, b) => b.citationCount - a.citationCount).slice(0, 3);
+  const recentPapers = allPapers.slice(0, 3);
+  const trendingPapers = [...allPapers].sort((a, b) => b.citationCount - a.citationCount).slice(0, 3);
+  const themes = [...new Set(allPapers.map((p) => p.theme))];
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-thin bg-background rounded-xl border border-border shadow-sm">
       <div className="max-w-3xl mx-auto px-8 py-10">
-        {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -30,9 +29,9 @@ export const HomeView = () => {
           className="grid grid-cols-3 gap-3 mb-10"
         >
           {[
-            { icon: FileText, label: "Papers", value: papers.length.toString(), color: "text-ai-accent" },
-            { icon: BookOpen, label: "Themes", value: "4", color: "text-success" },
-            { icon: Sparkles, label: "AI Chats", value: "12", color: "text-citation-badge" },
+            { icon: FileText, label: "Papers", value: allPapers.length.toString(), color: "text-primary" },
+            { icon: BookOpen, label: "Themes", value: themes.length.toString(), color: "text-primary" },
+            { icon: Sparkles, label: "AI Chats", value: "12", color: "text-primary" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="bg-card border border-border rounded-lg p-4 hover:border-muted-foreground/30 transition-colors">
               <div className="flex items-center gap-2 mb-2">
@@ -89,14 +88,14 @@ export const HomeView = () => {
 };
 
 const PaperRow = ({ paper, index, onClick, showCitations }: {
-  paper: typeof papers[0]; index: number; onClick: () => void; showCitations?: boolean;
+  paper: any; index: number; onClick: () => void; showCitations?: boolean;
 }) => (
   <motion.button
     initial={{ opacity: 0, x: -8 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.2, delay: index * 0.03 }}
     onClick={onClick}
-    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors text-left group"
+    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-left group"
   >
     <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
     <div className="flex-1 min-w-0">
@@ -107,7 +106,7 @@ const PaperRow = ({ paper, index, onClick, showCitations }: {
       <span className="text-xs text-muted-foreground tabular-nums">{paper.citationCount.toLocaleString()} citations</span>
     )}
     <div className="flex gap-1">
-      {paper.tags.slice(0, 2).map((tag) => (
+      {paper.tags.slice(0, 2).map((tag: string) => (
         <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-accent rounded text-muted-foreground">{tag}</span>
       ))}
     </div>
