@@ -12,20 +12,21 @@ const AppLayout = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-muted/40">
-      {/* Top header bar spanning full width */}
       <TopBar />
 
-      {/* Main content area below header */}
-      <div className="flex flex-1 min-h-0 overflow-hidden p-1.5 pt-0 gap-1.5">
+      <div className="flex flex-1 min-h-0 overflow-hidden px-1.5 pb-1.5 gap-1.5">
         <SidebarToggle />
         <AppSidebar />
 
         <div className="flex flex-1 min-w-0 gap-1.5">
           {viewMode === "home" && <HomeView />}
           {viewMode === "library" && <LibraryView />}
-          {viewMode === "paper" && <DocumentViewer />}
-
-          {viewMode === "paper" && <AIChatPanel />}
+          {viewMode === "paper" && (
+            <>
+              <DocumentViewer />
+              <AIChatPanel />
+            </>
+          )}
         </div>
       </div>
 

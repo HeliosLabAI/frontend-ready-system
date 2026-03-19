@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { ViewMode, Paper, ChatMessage } from "@/types";
-import { papers, AI_RESPONSES } from "@/data/papers";
+import { papers } from "@/data/papers";
 
 interface AppState {
   viewMode: ViewMode;
@@ -28,7 +28,6 @@ export const useAppState = () => {
   return ctx;
 };
 
-// Pre-loaded AI chat content to match reference
 const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: "init-1",
@@ -43,7 +42,7 @@ These concepts collectively illustrate a shift towards more intelligent, adaptiv
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("paper");
-  const [selectedPaper, setSelectedPaper] = useState<Paper | null>(papers[0]);
+  const [selectedPaper, setSelectedPaperState] = useState<Paper | null>(papers[0]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -53,16 +52,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addChatMessage = (msg: ChatMessage) => setChatMessages((prev) => [...prev, msg]);
   const clearChat = () => setChatMessages([]);
 
-  const handleSelectPaper = (paper: Paper | null) => {
-    setSelectedPaper(paper);
-    if (paper) setViewMode("paper");
+  const setSelectedPaper = (paper: Paper | null) => {
+    setSelectedPaperState(paper);
+    if (paper) {
+      setViewMode("paper");
+    }
+  };
+
+  const handleSetViewMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (mode !== "paper") {
+      // Don't clear paper when going to home/library so user can go back
+    }
   };
 
   return (
     <AppContext.Provider
       value={{
-        viewMode, setViewMode,
-        selectedPaper, setSelectedPaper: handleSelectPaper,
+        viewMode, setViewMode: handleSetViewMode,
+        selectedPaper, setSelectedPaper,
         sidebarCollapsed, setSidebarCollapsed,
         chatPanelOpen, setChatPanelOpen,
         searchOpen, setSearchOpen,
