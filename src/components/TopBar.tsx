@@ -5,7 +5,7 @@ export const TopBar = () => {
   const { setSearchOpen, sidebarCollapsed } = useAppState();
 
   return (
-    <div className="flex items-center h-12 border-b border-border bg-background shrink-0 px-4 gap-3">
+    <div className="flex items-center h-12 bg-muted/40 shrink-0 px-4 gap-3">
       {/* Left section: spacer for sidebar width alignment */}
       <div className={`flex items-center gap-2 shrink-0 transition-all ${sidebarCollapsed ? "w-8" : "w-[244px]"}`}>
         {/* This space aligns with sidebar below */}
