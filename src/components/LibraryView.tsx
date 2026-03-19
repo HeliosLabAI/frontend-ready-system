@@ -24,7 +24,7 @@ export const LibraryView = () => {
   });
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-thin">
+    <div className="flex-1 overflow-y-auto scrollbar-thin bg-background rounded-xl border border-border shadow-sm">
       <div className="max-w-4xl mx-auto px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <h1 className="text-2xl font-bold text-foreground tracking-tight mb-1">Library</h1>
