@@ -152,7 +152,7 @@ export const AIChatPanel = () => {
                 </div>
               )}
 
-              <div className="relative border border-border rounded-lg bg-surface-elevated focus-within:border-muted-foreground/30 transition-colors">
+              <div className="relative border border-border rounded-xl bg-surface-elevated focus-within:border-muted-foreground/30 transition-colors shadow-sm">
                 <input
                   ref={inputRef}
                   type="text"

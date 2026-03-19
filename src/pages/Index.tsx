@@ -11,20 +11,22 @@ const AppLayout = () => {
   const { viewMode } = useAppState();
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-muted/40">
       {/* Top header bar spanning full width */}
       <TopBar />
 
       {/* Main content area below header */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden p-1.5 pt-0 gap-1.5">
         <SidebarToggle />
         <AppSidebar />
 
-        {viewMode === "home" && <HomeView />}
-        {viewMode === "library" && <LibraryView />}
-        {viewMode === "paper" && <DocumentViewer />}
+        <div className="flex flex-1 min-w-0 gap-1.5">
+          {viewMode === "home" && <HomeView />}
+          {viewMode === "library" && <LibraryView />}
+          {viewMode === "paper" && <DocumentViewer />}
 
-        {viewMode === "paper" && <AIChatPanel />}
+          {viewMode === "paper" && <AIChatPanel />}
+        </div>
       </div>
 
       <GlobalSearch />
