@@ -16,7 +16,7 @@ export const DocumentViewer = () => {
   const paper = selectedPaper;
 
   return (
-    <div className="flex-1 flex flex-col h-full min-w-0 bg-background">
+    <div className="flex-1 flex flex-col h-full min-w-0 bg-background rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Breadcrumb */}
       <div className="px-6 pt-4 pb-1 shrink-0">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

@@ -63,7 +63,7 @@ export const AIChatPanel = () => {
           animate={{ width: 320, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="h-full border-l border-border bg-background flex flex-col overflow-hidden shrink-0"
+          className="h-full border border-border bg-background rounded-xl flex flex-col overflow-hidden shrink-0 shadow-sm"
         >
           <div className="min-w-[320px] h-full flex flex-col">
             {/* Header */}
@@ -152,7 +152,7 @@ export const AIChatPanel = () => {
                 </div>
               )}
 
-              <div className="relative border border-border rounded-lg bg-surface-elevated focus-within:border-muted-foreground/30 transition-colors">
+              <div className="relative border border-border rounded-xl bg-surface-elevated focus-within:border-muted-foreground/30 transition-colors shadow-sm">
                 <input
                   ref={inputRef}
                   type="text"

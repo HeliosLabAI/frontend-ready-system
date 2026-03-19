@@ -10,7 +10,7 @@ export const HomeView = () => {
   const trendingPapers = [...papers].sort((a, b) => b.citationCount - a.citationCount).slice(0, 3);
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-thin">
+    <div className="flex-1 overflow-y-auto scrollbar-thin bg-background rounded-xl border border-border shadow-sm">
       <div className="max-w-3xl mx-auto px-8 py-10">
         {/* Hero */}
         <motion.div

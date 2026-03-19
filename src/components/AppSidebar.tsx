@@ -58,7 +58,7 @@ export const AppSidebar = () => {
     <motion.div
       animate={{ width: sidebarCollapsed ? 0 : 220 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className="h-full bg-background border-r border-border flex flex-col overflow-hidden shrink-0"
+      className="h-full bg-background rounded-xl border border-border flex flex-col overflow-hidden shrink-0 shadow-sm"
     >
       <div className="min-w-[220px] h-full flex flex-col">
         {/* User header */}
