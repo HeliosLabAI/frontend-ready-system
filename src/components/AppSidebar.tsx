@@ -21,9 +21,7 @@ const TreeNode = ({ item, depth = 0, activeItem, onSelect }: {
     <div>
       <button
         onClick={() => {
-          if (hasChildren) {
-            setExpanded(!expanded);
-          }
+          if (hasChildren) setExpanded(!expanded);
           onSelect(item.name);
         }}
         className={`w-full flex items-center gap-1.5 py-1.5 pr-2 text-[13px] transition-colors rounded-md
@@ -71,8 +69,19 @@ export const AppSidebar = () => {
       className="h-full bg-background rounded-xl border border-border flex flex-col overflow-hidden shrink-0 shadow-sm"
     >
       <div className="min-w-[220px] h-full flex flex-col">
+        {/* Collapse button */}
+        <div className="flex items-center justify-end px-2 pt-2">
+          <button
+            onClick={() => setSidebarCollapsed(true)}
+            className="p-1 hover:bg-accent rounded transition-colors"
+            title="Collapse sidebar"
+          >
+            <PanelLeftClose className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+
         {/* Nav */}
-        <div className="px-2 py-2 space-y-0.5">
+        <div className="px-2 py-1 space-y-0.5">
           <button
             onClick={() => handleNavClick("home")}
             className={`w-full flex items-center gap-2 px-2 py-1.5 text-[13px] rounded-md transition-colors
@@ -124,7 +133,8 @@ export const SidebarToggle = () => {
   return (
     <button
       onClick={() => setSidebarCollapsed(false)}
-      className="fixed top-14 left-3 z-30 p-1.5 bg-card border border-border rounded-md hover:bg-accent transition-colors shadow-sm"
+      className="fixed top-14 left-3 z-30 p-1.5 bg-card border border-border rounded-lg hover:bg-accent transition-colors shadow-sm"
+      title="Expand sidebar"
     >
       <PanelLeft className="w-4 h-4 text-muted-foreground" />
     </button>
