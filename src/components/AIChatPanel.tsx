@@ -15,7 +15,7 @@ const renderContent = (content: string) => {
     }
     if (/^\[\d+\]$/.test(part)) {
       return (
-        <span key={j} className="inline-flex items-center justify-center w-5 h-5 mx-0.5 text-[10px] font-medium bg-citation-badge/15 text-citation-badge rounded-full align-text-bottom cursor-pointer hover:bg-citation-badge/25 transition-colors">
+        <span key={j} className="inline-flex items-center justify-center w-[18px] h-[18px] mx-0.5 text-[10px] font-medium bg-muted text-muted-foreground rounded-full align-text-bottom cursor-pointer hover:bg-accent transition-colors">
           {part.slice(1, -1)}
         </span>
       );
@@ -32,7 +32,6 @@ export const AIChatPanel = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
   useEffect(() => { scrollToBottom(); }, [chatMessages]);
 
   const handleSend = () => {
@@ -40,20 +39,18 @@ export const AIChatPanel = () => {
     const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content: input.trim(), timestamp: new Date() };
     addChatMessage(userMsg);
     setInput("");
-
     setIsTyping(true);
+
     const responseKey = input.toLowerCase().includes("summary") ? "summary"
-      : input.toLowerCase().includes("method") ? "methodology"
-      : "default";
+      : input.toLowerCase().includes("method") ? "methodology" : "default";
 
     setTimeout(() => {
-      const aiMsg: ChatMessage = {
+      addChatMessage({
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: AI_RESPONSES[responseKey],
         timestamp: new Date(),
-      };
-      addChatMessage(aiMsg);
+      });
       setIsTyping(false);
     }, 1200 + Math.random() * 800);
   };
@@ -63,36 +60,36 @@ export const AIChatPanel = () => {
       {chatPanelOpen && (
         <motion.div
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 340, opacity: 1 }}
+          animate={{ width: 320, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="h-full border-l border-border bg-background flex flex-col overflow-hidden shrink-0"
         >
-          <div className="min-w-[340px] h-full flex flex-col">
+          <div className="min-w-[320px] h-full flex flex-col">
             {/* Header */}
-            <div className="flex items-center gap-2 px-3 h-12 border-b border-border shrink-0">
-              <Sparkles className="w-4 h-4 text-ai-accent shrink-0" />
-              <span className="text-sm font-medium text-foreground truncate flex-1">
-                {selectedPaper ? selectedPaper.title.slice(0, 30) + "..." : "AI Assistant"}
+            <div className="flex items-center gap-1.5 px-3 h-11 border-b border-border shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="text-[13px] font-medium text-foreground truncate flex-1">
+                Human-AI Interaction (HAX) and...
               </span>
               <button onClick={clearChat} className="p-1 hover:bg-accent rounded transition-colors">
-                <Plus className="w-4 h-4 text-muted-foreground" />
+                <Plus className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
               <button className="p-1 hover:bg-accent rounded transition-colors">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+                <Clock className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
               <button className="p-1 hover:bg-accent rounded transition-colors">
-                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4">
-              {chatMessages.length === 0 && (
+              {chatMessages.length === 0 ? (
                 <div className="text-center py-12">
-                  <Sparkles className="w-8 h-8 text-ai-accent/30 mx-auto mb-3" />
+                  <Sparkles className="w-8 h-8 text-muted-foreground/20 mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground mb-1">Ask about this paper</p>
-                  <p className="text-xs text-muted-foreground/70">Try "summarize", "explain methodology", or any question</p>
+                  <p className="text-xs text-muted-foreground/60">Try "summarize", "methodology", or any question</p>
                   <div className="mt-4 space-y-2">
                     {["Summarize key findings", "Explain the methodology", "What are the limitations?"].map((q) => (
                       <button
@@ -105,26 +102,26 @@ export const AIChatPanel = () => {
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {chatMessages.map((msg) => (
                 <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.15 }}
                   className={`mb-4 ${msg.role === "user" ? "flex justify-end" : ""}`}
                 >
                   {msg.role === "user" ? (
-                    <div className="bg-primary text-primary-foreground rounded-lg rounded-br-sm px-3 py-2 max-w-[85%] text-sm">
+                    <div className="bg-primary text-primary-foreground rounded-lg rounded-br-sm px-3 py-2 max-w-[85%] text-[13px]">
                       {msg.content}
                     </div>
                   ) : (
                     <div>
-                      <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                      <div className="text-[13px] text-foreground/85 leading-relaxed whitespace-pre-wrap">
                         {renderContent(msg.content)}
                       </div>
-                      <div className="flex items-center gap-1 mt-2 text-muted-foreground">
+                      <div className="flex items-center gap-0.5 mt-2 text-muted-foreground">
                         {[MessageCircle, RotateCcw, Share2, ThumbsUp, Copy].map((Icon, i) => (
                           <button key={i} className="p-1 hover:bg-accent rounded transition-colors"><Icon className="w-3.5 h-3.5" /></button>
                         ))}
@@ -136,20 +133,20 @@ export const AIChatPanel = () => {
 
               {isTyping && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 py-2">
-                  <Loader2 className="w-3.5 h-3.5 text-ai-accent animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
                   <span className="text-xs text-muted-foreground">Thinking...</span>
                 </motion.div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
+            {/* Input area */}
             <div className="px-3 pb-3 shrink-0">
               {selectedPaper && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="text-xs text-muted-foreground">@</span>
-                  <span className="inline-flex items-center gap-1 bg-accent px-2 py-0.5 rounded text-xs text-foreground max-w-[200px] truncate">
-                    {selectedPaper.title.slice(0, 25)}...
+                  <span className="inline-flex items-center gap-1 bg-accent px-2 py-0.5 rounded text-xs text-foreground">
+                    Learning Transferable...
                     <button className="hover:text-destructive shrink-0"><X className="w-3 h-3" /></button>
                   </span>
                 </div>
@@ -163,7 +160,7 @@ export const AIChatPanel = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
                   placeholder="Ask this context a question..."
-                  className="w-full bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none pr-10"
+                  className="w-full bg-transparent px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground outline-none pr-10"
                 />
                 <button
                   onClick={handleSend}
@@ -174,14 +171,14 @@ export const AIChatPanel = () => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Sparkles className="w-3 h-3" />
                   <span>Gemini 2.5 Flash</span>
-                  <span className="text-[10px]">▾</span>
+                  <span className="text-[9px]">▾</span>
                 </div>
                 <span>No limit</span>
-                <span className="text-[10px]">▾</span>
+                <span className="text-[9px]">▾</span>
               </div>
             </div>
           </div>

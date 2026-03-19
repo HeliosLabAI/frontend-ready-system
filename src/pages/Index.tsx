@@ -5,33 +5,29 @@ import { LibraryView } from "@/components/LibraryView";
 import { DocumentViewer } from "@/components/DocumentViewer";
 import { AIChatPanel } from "@/components/AIChatPanel";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { TopBar } from "@/components/TopBar";
 
 const AppLayout = () => {
-  const { viewMode, searchOpen, setSearchOpen } = useAppState();
+  const { viewMode } = useAppState();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background">
-      <SidebarToggle />
-      <AppSidebar />
-      
-      {viewMode === "home" && <HomeView />}
-      {viewMode === "library" && <LibraryView />}
-      {viewMode === "paper" && <DocumentViewer />}
-      
-      {viewMode === "paper" && <AIChatPanel />}
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
+      {/* Top header bar spanning full width */}
+      <TopBar />
+
+      {/* Main content area below header */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <SidebarToggle />
+        <AppSidebar />
+
+        {viewMode === "home" && <HomeView />}
+        {viewMode === "library" && <LibraryView />}
+        {viewMode === "paper" && <DocumentViewer />}
+
+        {viewMode === "paper" && <AIChatPanel />}
+      </div>
 
       <GlobalSearch />
-
-      {/* Keyboard shortcut hint */}
-      {viewMode !== "paper" && (
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg shadow-md text-xs text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 transition-all"
-        >
-          <span>Search</span>
-          <kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px]">⌘K</kbd>
-        </button>
-      )}
     </div>
   );
 };
